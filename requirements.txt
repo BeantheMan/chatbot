@@ -1,2 +1,6 @@
-streamlit
-openai
+# General requirements
+streamlit == 1.57.0
+pandas == 3.0.3
+requests == 2.34.1
+anthropic == 0.106.0
+pdfplumber == 0.11.9
