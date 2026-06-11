@@ -24,7 +24,7 @@ import pandas as pd
 try:
     import pdfplumber
 except ImportError:
-    raise ImportError("Instala pdfplumber: pip install pdfplumber")
+    raise ImportError("Install pdfplumber: pip install pdfplumber")
 
 
 # ─────────────────────────────────────────────
@@ -42,8 +42,8 @@ def download_pdf(url: str = FOB_URL) -> bytes:
 
 def _page_text(page) -> str:
     """
-    Extrae texto de una página usando layout de 2 columnas fijo.
-    El reporte USDA FOB siempre es 2 columnas.
+    Extracts text from a page using a fixed 2-column layout.
+    The USDA FOB report is always 2 columns.
     """
     mid_x = page.width / 2
     left  = page.crop((0,     0, mid_x,      page.height))
@@ -55,8 +55,8 @@ def _page_text(page) -> str:
 
 def extract_text(pdf_bytes: bytes) -> tuple[str, str]:
     """
-    Extrae todo el texto del PDF en orden de 2 columnas.
-    Retorna (full_text, report_date_str).
+    Extracts all text from the PDF in 2-column order.
+    Returns (full_text, report_date_str).
     """
     full_text   = []
     report_date = ""
@@ -64,7 +64,7 @@ def extract_text(pdf_bytes: bytes) -> tuple[str, str]:
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
         for i, page in enumerate(pdf.pages):
             if i == 0:
-                # Página 1: extraer fecha del encabezado
+                # Page 1: extract date from header
                 header = page.extract_text(x_tolerance=2, y_tolerance=2) or ""
                 full_text.append(header)
                 date_match = re.search(
@@ -154,7 +154,7 @@ NOISE_STARTS = {
 
 
 def is_valid_package(text: str) -> bool:
-    """Filtra líneas que no son realmente empaques."""
+    """Filters lines that are not actual packages."""
     t = text.strip().lower()
     if not t:
         return False
@@ -164,7 +164,7 @@ def is_valid_package(text: str) -> bool:
     # Very short (1-2 characters)
     if len(t) <= 2:
         return False
-    # It begins with a noise word
+    # Starts with a noise word
     first_word = t.split()[0].rstrip(".,:")
     if first_word in NOISE_STARTS:
         return False
@@ -198,7 +198,7 @@ REGION_KEYWORDS = {
 
 
 def _detect_origin_region(line: str) -> tuple[str, str]:
-    """It attempts to detect the origin and region of a header line."""
+    """Attempts to detect origin and region from a header line."""
     line_up = line.upper()
     origin = ""
     region = ""
@@ -309,7 +309,7 @@ def get_fob_dataframe(url: str = FOB_URL) -> tuple[pd.DataFrame, str]:
     if df.empty:
         return df, ""
 
-    # Build context for the AI ​​agent
+    # Build context for the AI agent
     lines = [f"USDA FOB Report — {rpt_date}", f"Total entries: {len(df)}",
              f"Commodities: {df['commodity'].nunique()}",
              f"Origins: {', '.join(df['origin'].unique()[:10])}", ""]
