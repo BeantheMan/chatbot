@@ -1,19 +1,49 @@
-# 💬 Chatbot template
+# 🥦 USDA FOB Market Analyst
 
-A simple Streamlit app that shows how to build a chatbot using OpenAI's GPT-3.5.
+A Streamlit app that lets you chat with an AI analyst about daily USDA FOB shipping-point prices. It downloads the latest USDA FOB report, parses it into structured data, and answers questions via Anthropic Claude.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-template.streamlit.app/)
+## Running locally for development
 
-### How to run it on your own machine
+### 1. Install dependencies
 
-1. Install the requirements
+```bash
+pip install -r requirements.txt
+```
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+### 2. Add your API key
 
-2. Run the app
+Create `.streamlit/secrets.toml` (it is git-ignored) and add your Anthropic API key:
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+```toml
+ANTHROPIC_API_KEY = "sk-ant-api03-..."
+```
+
+### 3. Start the dev server
+
+**Windows:**
+
+```bash
+scripts\run.bat
+```
+
+**macOS / Linux:**
+
+```bash
+./scripts/run.sh
+```
+
+Or run Streamlit directly:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+The app will open at http://localhost:8501.
+
+### Dev settings
+
+The `.streamlit/config.toml` file enables:
+
+- `runOnSave = true` — the app reloads automatically when you edit code.
+- `fastReruns = true` — faster rerun during dev.
+- `gatherUsageStats = false` — disables Streamlit usage telemetry.

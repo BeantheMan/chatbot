@@ -1,4 +1,5 @@
 .streamlit/secrets.toml
+.streamlit/secrets.*.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -124,7 +125,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.streamlit
 .env
 .venv
 env/
