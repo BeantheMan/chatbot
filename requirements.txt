@@ -4,3 +4,4 @@ pandas == 3.0.3
 requests == 2.34.1
 anthropic == 0.106.0
 pdfplumber == 0.11.9
+scikit-learn == 1.8.0
