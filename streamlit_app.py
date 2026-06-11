@@ -27,7 +27,7 @@ st.set_page_config(
 ANTHROPIC_CLIENT = anthropic.Anthropic(
     api_key=st.secrets["ANTHROPIC_API_KEY"]
 )
-MODEL            = "claude-opus-4-20250514"
+MODEL            = "claude-sonnet-4-6"
 
 
 # ─────────────────────────────────────────────
