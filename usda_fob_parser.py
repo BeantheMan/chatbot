@@ -1,17 +1,18 @@
 """
 usda_fob_parser.py
 ==================
-Descarga y parsea el reporte USDA FOB Shipping Point (fvdfob.pdf).
-Devuelve un DataFrame con columnas:
-    date, category, commodity, origin, region, package, size, price_low,
-    price_high, price_avg, unit, quality, condition, misc
+Download and parse the USDA FOB Shipping Point report (fvdfob.pdf).
 
-Fixes incluidos:
-  - Layout forzado a 2 columnas (formato fijo del reporte USDA)
-  - RE_PRICE_LINE captura empaques que empiezan con dígito (50 lb, 7/10, 64s, etc.)
-  - _remove_holiday_notices elimina avisos de días feriados inyectados en el texto
-  - is_valid_package con filtros ampliados para ruido numérico puro
-  - Ignora líneas de pie de página "National FOB Review … PAGE N"
+Return a DataFrame with the following columns:
+date, category, commodity, origin, region, package, size, price_low,
+price_high, price_avg, unit, quality, condition, misc
+
+Fixes included:
+- Forced layout to 2 columns (fixed format of the USDA report)
+- RE_PRICE_LINE captures packages that begin with a digit (50 lb, 7/10, 64s, etc.)
+- _remove_holiday_notices removes holiday notices injected into the text
+- is_valid_package with extended filters for pure numeric noise
+- Ignores footer lines "National FOB Review … PAGE N"
 """
 
 import re
@@ -27,7 +28,7 @@ except ImportError:
 
 
 # ─────────────────────────────────────────────
-# 1. DESCARGA Y EXTRACCIÓN DEL PDF
+# 1. DOWNLOAD AND EXTRACTION OF THE PDF
 # ─────────────────────────────────────────────
 
 FOB_URL = "https://www.ams.usda.gov/mnreports/fvdfob.pdf"
@@ -80,10 +81,10 @@ def extract_text(pdf_bytes: bytes) -> tuple[str, str]:
 
 
 # ─────────────────────────────────────────────
-# 2. PRE-PROCESAMIENTO DEL TEXTO
+# 2. TEXT PRE-PROCESSING
 # ─────────────────────────────────────────────
 
-# Patrones de encabezados de sección
+# Section heading patterns
 RE_SALES_FOB = re.compile(
     r"Sales\s+F\.O\.B\..*?(?:Dollars?|USD)",
     re.IGNORECASE | re.DOTALL
@@ -100,12 +101,12 @@ RE_COMMODITY_HEADER = re.compile(
     re.MULTILINE
 )
 
-# Línea de precio: empaque (puede empezar con dígito), tamaño opcional, precio
+# Price line: packaging (may start with a digit), optional size, price
 RE_PRICE_LINE = re.compile(
-    r"^([\w\/][\w\s\/\-\.,()]*?)\s+"           # empaque (ahora captura dígitos iniciales)
-    r"(\d+s?(?:\s+count)?(?:\s+size)?)?\s*"    # tamaño opcional
-    r"(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)"  # rango de precio
-    r"(?:\s+(\d+(?:\.\d+)?))?",                # precio promedio opcional
+    r"^([\w\/][\w\s\/\-\.,()]*?)\s+"             # packaging (now captures initial digits)
+    r"(\d+s?(?:\s+count)?(?:\s+size)?)?\s*"      # optional size
+    r"(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)"  # price range
+    r"(?:\s+(\d+(?:\.\d+)?))?",                  # optional average price
     re.IGNORECASE
 )
 
@@ -124,7 +125,7 @@ HOLIDAY_PATTERNS = [
 
 
 def _remove_holiday_notices(text: str) -> str:
-    """Elimina avisos de días feriados que USDA inyecta en el texto de precios."""
+    """Remove holiday notices that USDA injects into the price text."""
     for pat in HOLIDAY_PATTERNS:
         text = pat.sub("", text)
     return text
@@ -133,13 +134,13 @@ def _remove_holiday_notices(text: str) -> str:
 def _clean_text(text: str) -> str:
     text = RE_FOOTER.sub("", text)
     text = _remove_holiday_notices(text)
-    # Normalizar espacios múltiples
+    # Normalize multiple spaces
     text = re.sub(r"[ \t]{2,}", " ", text)
     return text
 
 
 # ─────────────────────────────────────────────
-# 3. VALIDACIÓN DE EMPAQUES
+# 3. PACKAGING VALIDATION
 # ─────────────────────────────────────────────
 
 NOISE_STARTS = {
@@ -157,13 +158,13 @@ def is_valid_package(text: str) -> bool:
     t = text.strip().lower()
     if not t:
         return False
-    # Número puro sin unidad
+    # Pure number without units
     if re.fullmatch(r"[\d\.]+", t):
         return False
-    # Muy corto (1-2 chars)
+    # Very short (1-2 characters)
     if len(t) <= 2:
         return False
-    # Empieza con palabra de ruido
+    # It begins with a noise word
     first_word = t.split()[0].rstrip(".,:")
     if first_word in NOISE_STARTS:
         return False
@@ -171,7 +172,7 @@ def is_valid_package(text: str) -> bool:
 
 
 # ─────────────────────────────────────────────
-# 4. PARSEO PRINCIPAL
+# 4. CORE PARSING CODE
 # ─────────────────────────────────────────────
 
 KNOWN_CATEGORIES = {
@@ -197,7 +198,7 @@ REGION_KEYWORDS = {
 
 
 def _detect_origin_region(line: str) -> tuple[str, str]:
-    """Intenta detectar origen y región de una línea de encabezado."""
+    """It attempts to detect the origin and region of a header line."""
     line_up = line.upper()
     origin = ""
     region = ""
@@ -213,7 +214,7 @@ def _detect_origin_region(line: str) -> tuple[str, str]:
 
 
 def parse_fob_text(full_text: str, report_date: str) -> list[dict]:
-    """Parsea el texto completo del reporte y retorna lista de registros."""
+    """Parse the entire text of the report and return a list of records."""
     full_text = _clean_text(full_text)
     lines = full_text.splitlines()
 
@@ -223,7 +224,7 @@ def parse_fob_text(full_text: str, report_date: str) -> list[dict]:
     origin     = ""
     region     = ""
 
-    # Intentar parsear fecha
+    # Attempt to parse date
     try:
         date_obj = datetime.strptime(report_date.replace(",", ""), "%B %d %Y")
     except Exception:
@@ -237,21 +238,21 @@ def parse_fob_text(full_text: str, report_date: str) -> list[dict]:
         if not line:
             continue
 
-        # Detectar categoría
+        # Detect category
         line_up = line.upper()
         for cat in KNOWN_CATEGORIES:
             if line_up.startswith(cat):
                 category = cat.title()
                 break
 
-        # Detectar origen / región
+        # Detect origin / region
         org, reg = _detect_origin_region(line)
         if org:
             origin = org
         if reg:
             region = reg
 
-        # Detectar commodity: línea toda en mayúsculas, sin números
+        # Detect commodity: line all in capital letters, no numbers
         if (line.isupper() and len(line) > 3
                 and not re.search(r"\d", line)
                 and line_up not in KNOWN_CATEGORIES
@@ -259,7 +260,7 @@ def parse_fob_text(full_text: str, report_date: str) -> list[dict]:
             commodity = line.title()
             continue
 
-        # Detectar línea de precio
+        # Detect price line
         m = RE_PRICE_LINE.match(line)
         if m:
             pkg_raw   = m.group(1).strip()
@@ -292,13 +293,13 @@ def parse_fob_text(full_text: str, report_date: str) -> list[dict]:
 
 
 # ─────────────────────────────────────────────
-# 5. FUNCIÓN PÚBLICA PRINCIPAL
+# 5. PRIMARY PUBLIC FUNCTION
 # ─────────────────────────────────────────────
 
 def get_fob_dataframe(url: str = FOB_URL) -> tuple[pd.DataFrame, str]:
     """
-    Descarga el reporte USDA FOB y retorna (DataFrame, context_string).
-    context_string es un resumen de texto para pasar a un agente AI.
+    Download the USDA FOB report and return (DataFrame, context_string).
+    context_string is a text summary to pass to an AI agent.
     """
     pdf_bytes          = download_pdf(url)
     full_text, rpt_date = extract_text(pdf_bytes)
@@ -308,7 +309,7 @@ def get_fob_dataframe(url: str = FOB_URL) -> tuple[pd.DataFrame, str]:
     if df.empty:
         return df, ""
 
-    # Construir contexto para el agente AI
+    # Build context for the AI ​​agent
     lines = [f"USDA FOB Report — {rpt_date}", f"Total entries: {len(df)}",
              f"Commodities: {df['commodity'].nunique()}",
              f"Origins: {', '.join(df['origin'].unique()[:10])}", ""]

@@ -4,10 +4,10 @@ import pandas as pd
 import importlib
 import sys
 
-# Forzar reload de usda_fob_parser en cada ejecución de Streamlit.
-# Sin esto, Streamlit mantiene el módulo cacheado en sys.modules y no
-# recarga los cambios aunque el archivo haya sido actualizado en disco
-# (por ejemplo, después de un git pull).
+# Force reload of usda_fob_parser on every Streamlit execution.
+# Without this, Streamlit keeps the module cached in sys.modules and does not
+# reload changes even if the file was updated on disk
+# (for example, after a git pull).
 if "usda_fob_parser" in sys.modules:
     importlib.reload(sys.modules["usda_fob_parser"])
 
@@ -15,7 +15,7 @@ from usda_fob_parser import get_fob_dataframe
 
 
 # ─────────────────────────────────────────────
-# CONFIGURACIÓN
+# CONFIGURATION
 # ─────────────────────────────────────────────
 
 st.set_page_config(
@@ -31,7 +31,7 @@ MODEL            = "claude-opus-4-20250514"
 
 
 # ─────────────────────────────────────────────
-# CARGA DEL REPORTE (cacheada 1 hora)
+# LOAD REPORT (cached 1 hour)
 # ─────────────────────────────────────────────
 
 @st.cache_data(ttl=3600)
@@ -41,7 +41,7 @@ def load_report():
 
 
 # ─────────────────────────────────────────────
-# SIDEBAR — PANEL DE ESTADO DEL REPORTE
+# SIDEBAR — REPORT STATUS PANEL
 # ─────────────────────────────────────────────
 
 with st.sidebar:
@@ -55,7 +55,7 @@ with st.sidebar:
         with st.spinner("📥 Downloading..."):
             df, context = load_report()
 
-        # Auto-limpieza si el resultado cacheado está vacío
+        # Auto-clear if cached result is empty
         if df.empty:
             st.cache_data.clear()
             df, context = load_report()
@@ -89,28 +89,28 @@ with st.sidebar:
 
 
 # ─────────────────────────────────────────────
-# ÁREA PRINCIPAL — CHAT CON EL AGENTE
+# MAIN AREA — CHAT WITH THE AGENT
 # ─────────────────────────────────────────────
 
 st.title("🥦 USDA FOB Market Analyst")
 st.caption("Ask questions about today's FOB shipping point prices.")
 
-# Historial de conversación en session_state
+# Conversation history in session_state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mostrar historial
+# Show history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Input del usuario
+# User input
 if prompt := st.chat_input("Ask about prices, commodities, origins…"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Construir system prompt con los datos del reporte
+    # Build system prompt with the report data
     system_prompt = f"""You are a produce market analyst specializing in USDA FOB shipping point prices.
 You have access to today's USDA FOB report data. Use this data to answer questions accurately.
 
@@ -125,7 +125,7 @@ Guidelines:
 - Always mention the report date when discussing prices.
 """
 
-    # Construir historial de mensajes para la API
+    # Build message history for the API
     api_messages = [
         {"role": m["role"], "content": m["content"]}
         for m in st.session_state.messages
