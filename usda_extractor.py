@@ -93,12 +93,10 @@ def get_api_key() -> str:
     Set it in a local .env file (see .env.example) or export USDA_MARS_API_KEY.
     """
     import streamlit as st
-    api_key: str | None = st.secrets["USDA_API_KEY"]
+    api_key = st.secrets.get("USDA_API_KEY")
     if not api_key:
-        raise SystemExit(
-            "USDA_API_KEY is not set!"
-        )
-    return api_key
+        raise SystemExit("USDA_API_KEY is not set!")
+    return str(api_key)
 
 def previous_weekday(date):
     date -= timedelta(days=1)
@@ -144,17 +142,15 @@ def fetch_all_markets(markets: dict, n_days: int, api_key: str) -> pd.DataFrame:
     Returns a consolidated DataFrame with all the API columns.
     """
     now = datetime.now(ZoneInfo("America/Los_Angeles"))
-    days: list[str] = []
-    days.append(now.strftime("%m/%d/%Y"))
-    n_days -= 1
-    while n_days > 0:
+    days: list[str] = [now.strftime("%m/%d/%Y")]
+
+    for _ in range(n_days - 1):
         now = previous_weekday(now)
         days.append(now.strftime("%m/%d/%Y"))
-        n_days -= 1
-
+        
     dfs = []
     for market_name, report_id in markets.items():
-        url = f"https://marsapi.ams.usda.gov/services/v1.2/reports/{report_id}/report details"
+        url = f"https://marsapi.ams.usda.gov/services/v1.2/reports/{report_id}/report%20details"
         print(f"  Fetching {market_name} ({report_id})...", end=" ")
         count = 0
 
@@ -209,14 +205,14 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         ["group", "grp"]
     ]
     for target, source in swap_pairs:
+        if target not in df.columns or source not in df.columns:
+            continue
         is_empty = (
             df[target].isna()
             | (df[target].astype(str).str.strip() == "")
             | (df[target] == "N/A")
         )
-        df[target] = df[target].where(
-            ~is_empty, df[source]
-        )
+        df[target] = df[target].where(~is_empty, df[source])
     
     df["group"] = df["group"].where(
         pd.isna(df["category"]) | (df["category"] == "N/A"), df["category"]

@@ -14,8 +14,8 @@ from collections import Counter
 # (for example, after a git pull).
 if "usda_fob_parser" in sys.modules:
     importlib.reload(sys.modules["usda_fob_parser"])
+if "usda_extractor" in sys.modules:
     importlib.reload(sys.modules["usda_extractor"])
-
 from usda_extractor import get_usda_data
 
 
@@ -110,7 +110,7 @@ with st.sidebar:
                     "North Carolina"
                 ]
                 orig_str = str(orig).split(',', 1)[0]
-                if orig_str[1].isupper():
+                if len(orig_str) > 1 and orig_str[1].isupper():
                     orig_str = orig_str[:1] + orig_str[1:].lower()
                 matched = next((sub for sub in substrs if sub.casefold() in orig_str.casefold()), None)
                 match matched:
@@ -127,7 +127,7 @@ with st.sidebar:
             for place, count in sorted(origins.items()):
                 st.write(f"• {place}: {count}")
         else:
-            st.error("⚠️ No data found — check connection or PDF format")
+            st.error("⚠️ No data found — check API connectivity and credentials")
             context = ""
 
     except Exception as e:
