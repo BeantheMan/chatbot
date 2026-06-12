@@ -110,7 +110,7 @@ with st.sidebar:
                     "North Carolina"
                 ]
                 orig_str = str(orig).split(',', 1)[0]
-                if orig_str[1].isupper():
+                if len(orig_str) > 1 and orig_str[1].isupper():
                     orig_str = orig_str[:1] + orig_str[1:].lower()
                 matched = next((sub for sub in substrs if sub.casefold() in orig_str.casefold()), None)
                 match matched:
