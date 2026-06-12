@@ -143,7 +143,7 @@ with st.sidebar:
 # ─────────────────────────────────────────────
 
 st.title("🥦 USDA FOB Market Analyst")
-st.caption("Ask questions about today's FOB shipping point prices.")
+st.caption("Ask questions about the most recent FOB shipping point prices.")
 
 # Conversation history in session_state
 if "messages" not in st.session_state:
