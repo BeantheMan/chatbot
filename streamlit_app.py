@@ -69,7 +69,9 @@ with st.sidebar:
         if not df.empty:
             pacific_now = datetime.now(ZoneInfo("America/Los_Angeles"))
             today: str = pacific_now.strftime("%m/%d/%Y")
-            yesterday: str = (pacific_now - timedelta(days=1)).strftime("%m/%d/%Y")
+            last_day: str = (pacific_now - timedelta(days=(
+                3 if pacific_now.weekday() == 0 else 1
+            ))).strftime("%m/%d/%Y")
 
             st.download_button(
                 label="📥 Download Report CSV",
@@ -86,7 +88,7 @@ with st.sidebar:
             st.divider()
             st.subheader("Entries")
             st.write(f"• {today}: {(df["report_end_date"] == today).sum()}")
-            st.write(f"• {yesterday}: {(df["report_end_date"] == yesterday).sum()}")
+            st.write(f"• {last_day}: {(df["report_end_date"] == last_day).sum()}")
 
             st.divider()
             st.subheader("Categories")
