@@ -150,7 +150,8 @@ def fetch_all_markets(markets: dict, n_days: int, api_key: str) -> pd.DataFrame:
     days.append(now.strftime("%m/%d/%Y"))
     n_days -= 1
     while n_days > 0:
-        now = days.append(previous_weekday(now).strftime("%m/%d/%Y"))
+        now = previous_weekday(now)
+        days.append(now.strftime("%m/%d/%Y"))
         n_days -= 1
 
     dfs = []
@@ -280,31 +281,7 @@ def get_usda_data(n_days: int = 2) -> tuple[pd.DataFrame, str]:
     Returns DataFrame and string of csv data tuple
     """
     df: pd.DataFrame = fetch_all_markets(markets=MARKETS, n_days=n_days, api_key=get_api_key())
-    # df = pq.read_table("data.parquet").to_pandas()
     df["quality"] = ""
-
-    # --- 2.1 Both granular (commodity + grade + package) ---
-    both_granular = build_both_granular(df, LA_TERMINAL, FOB_MARKETS)
-
-    # --- 2.2 Re-aggregate to commodity level for the analytical table ---
-    # Average the both-granular prices, collapsing grade and package
-    both_commodity = (
-        both_granular.groupby(["report_date", "commodity"], sort=True)[
-            ["price_LA", "price_FOB", "spread", "spread_pct"]
-        ]
-        .mean()
-        .reset_index()
-    )
-
-    # fob_origin: most frequent origin per (date, commodity)
-    fob_origin_mode = (
-        both_granular.groupby(["report_date", "commodity"])["fob_origin"]
-        .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else np.nan)
-        .reset_index()
-    )
-    both_commodity = both_commodity.merge(
-        fob_origin_mode, on=["report_date", "commodity"], how="left"
-    )
     df = clean_data(df)
     return df, df.to_csv(index=False, na_rep="")
 
