@@ -127,7 +127,7 @@ with st.sidebar:
             for place, count in sorted(origins.items()):
                 st.write(f"• {place}: {count}")
         else:
-            st.error("⚠️ No data found — check connection or PDF format")
+            st.error("⚠️ No data found — check API connectivity and credentials")
             context = ""
 
     except Exception as e:
