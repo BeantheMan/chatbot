@@ -1,9 +1,7 @@
 import requests
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
-from inventory_pricing import build_both_granular
 
-import numpy as np
 import pandas as pd
 
 """
