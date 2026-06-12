@@ -153,7 +153,7 @@ def fetch_all_markets(markets: dict, n_days: int, api_key: str) -> pd.DataFrame:
         days.append(now.strftime("%m/%d/%Y"))
     dfs = []
     for market_name, report_id in markets.items():
-        url = f"https://marsapi.ams.usda.gov/services/v1.2/reports/{report_id}/report details"
+        url = f"https://marsapi.ams.usda.gov/services/v1.2/reports/{report_id}/report%20details"
         print(f"  Fetching {market_name} ({report_id})...", end=" ")
         count = 0
 
