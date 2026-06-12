@@ -5,7 +5,6 @@ from inventory_pricing import build_both_granular
 
 import numpy as np
 import pandas as pd
-from pyarrow import parquet as pq
 
 """
 usda_extractor.py
@@ -103,6 +102,13 @@ def get_api_key() -> str:
         )
     return api_key
 
+def previous_weekday(date):
+    date -= timedelta(days=1)
+
+    while date.weekday() >= 5:  # Saturday or Sunday
+        date -= timedelta(days=1)
+
+    return date
 
 def find_list_of_dicts(obj):
     """
@@ -139,11 +145,13 @@ def fetch_all_markets(markets: dict, n_days: int, api_key: str) -> pd.DataFrame:
     Download n_days days back from end_day for each market.
     Returns a consolidated DataFrame with all the API columns.
     """
-    pacific_now = datetime.now(ZoneInfo("America/Los_Angeles"))
-
-    # Format as MM/DD/YYYY
-    # end_dt = pacific_now.strftime("%m/%d/%Y")
-    days = [(pacific_now - timedelta(days=i)).strftime("%m/%d/%Y") for i in range(n_days)]
+    now = datetime.now(ZoneInfo("America/Los_Angeles"))
+    days: list[str] = []
+    days.append(now.strftime("%m/%d/%Y"))
+    n_days -= 1
+    while n_days > 0:
+        now = days.append(previous_weekday(now).strftime("%m/%d/%Y"))
+        n_days -= 1
 
     dfs = []
     for market_name, report_id in markets.items():
@@ -259,17 +267,18 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         .drop_duplicates(subset=key_cols, keep="first")
     )
 
-    df = df[FILTER_FIELDS].sort_values(by="commodity")
+    df = df[FILTER_FIELDS].sort_values(
+        by=["commodity", "variety", "report_end_date", "properties", "item_size"]
+    )
     df.rename(columns={"group": "category"}, inplace=True)
     return df.replace(r"^\s*N/A\s*$", "", regex=True)
 
-def get_usda_data(n_days: int) -> str:
+def get_usda_data(n_days: int = 2) -> tuple[pd.DataFrame, str]:
     """
     Extracts most recent USDA my market news data for n_days.
 
-    Returns str of data in csv file form
+    Returns DataFrame and string of csv data tuple
     """
-
     df: pd.DataFrame = fetch_all_markets(markets=MARKETS, n_days=n_days, api_key=get_api_key())
     # df = pq.read_table("data.parquet").to_pandas()
     df["quality"] = ""
@@ -296,11 +305,10 @@ def get_usda_data(n_days: int) -> str:
     both_commodity = both_commodity.merge(
         fob_origin_mode, on=["report_date", "commodity"], how="left"
     )
-    
-    return clean_data(df).to_csv(index=False, na_rep="")
+    df = clean_data(df)
+    return df, df.to_csv(index=False, na_rep="")
 
 if __name__ == "__main__":
-    csv_string = get_usda_data(2)
+    df, csv_string = get_usda_data(2)
     with open("output.csv", "w", encoding="utf-8", newline="") as f:
         f.write(csv_string)
-    
