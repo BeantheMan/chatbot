@@ -95,12 +95,10 @@ def get_api_key() -> str:
     Set it in a local .env file (see .env.example) or export USDA_MARS_API_KEY.
     """
     import streamlit as st
-    api_key: str | None = st.secrets["USDA_API_KEY"]
+    api_key = st.secrets.get("USDA_API_KEY")
     if not api_key:
-        raise SystemExit(
-            "USDA_API_KEY is not set!"
-        )
-    return api_key
+        raise SystemExit("USDA_API_KEY is not set!")
+    return str(api_key)
 
 def previous_weekday(date):
     date -= timedelta(days=1)
