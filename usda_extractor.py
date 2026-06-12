@@ -206,14 +206,14 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         ["group", "grp"]
     ]
     for target, source in swap_pairs:
+        if target not in df.columns or source not in df.columns:
+            continue
         is_empty = (
             df[target].isna()
             | (df[target].astype(str).str.strip() == "")
             | (df[target] == "N/A")
         )
-        df[target] = df[target].where(
-            ~is_empty, df[source]
-        )
+        df[target] = df[target].where(~is_empty, df[source])
     
     df["group"] = df["group"].where(
         pd.isna(df["category"]) | (df["category"] == "N/A"), df["category"]
