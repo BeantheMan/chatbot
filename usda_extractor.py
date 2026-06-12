@@ -146,13 +146,11 @@ def fetch_all_markets(markets: dict, n_days: int, api_key: str) -> pd.DataFrame:
     Returns a consolidated DataFrame with all the API columns.
     """
     now = datetime.now(ZoneInfo("America/Los_Angeles"))
-    days: list[str] = []
-    days.append(now.strftime("%m/%d/%Y"))
-    n_days -= 1
-    while n_days > 0:
-        now = days.append(previous_weekday(now).strftime("%m/%d/%Y"))
-        n_days -= 1
+    days: list[str] = [now.strftime("%m/%d/%Y")]
 
+    for _ in range(n_days - 1):
+        now = previous_weekday(now)
+        days.append(now.strftime("%m/%d/%Y"))
     dfs = []
     for market_name, report_id in markets.items():
         url = f"https://marsapi.ams.usda.gov/services/v1.2/reports/{report_id}/report details"
