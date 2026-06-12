@@ -14,8 +14,8 @@ from collections import Counter
 # (for example, after a git pull).
 if "usda_fob_parser" in sys.modules:
     importlib.reload(sys.modules["usda_fob_parser"])
+if "usda_extractor" in sys.modules:
     importlib.reload(sys.modules["usda_extractor"])
-
 from usda_extractor import get_usda_data
 
 
